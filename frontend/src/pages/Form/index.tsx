@@ -10,6 +10,7 @@ import {
   Textarea,
   Box,
   Button,
+  useToast,
 } from "@chakra-ui/react";
 
 import Layout from "../../layout";
@@ -35,6 +36,7 @@ const FormPage: React.FC = () => {
 
   const { pathname } = useLocation();
   const { id } = useParams();
+  const toast = useToast();
   // console.log(pathname.split("/")[1]);
 
   useEffect(() => {
@@ -72,13 +74,34 @@ const FormPage: React.FC = () => {
       } catch (error) {
         console.log(error);
       }
+      toast({
+        title: "Sukses",
+        description: "Item diupdate",
+        status: "success",
+        isClosable: true,
+      });
     } else {
       try {
         await axios.post("http://localhost:5000/api/cars", data);
       } catch (error) {
         console.log(error);
       }
+      toast({
+        title: "Sukses",
+        description: "Item dibuat",
+        status: "success",
+        isClosable: true,
+      });
     }
+
+    setData({
+      title: "",
+      description: "",
+      price: 0,
+      merk: "",
+      type: "",
+      stock: 0,
+    });
   };
 
   return (

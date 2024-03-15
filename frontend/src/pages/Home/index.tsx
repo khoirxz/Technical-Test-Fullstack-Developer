@@ -49,38 +49,47 @@ const Home: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   useEffect(() => {
-    const getAllCars = async () => {
-      setIsLoading(true);
-      try {
-        const response = await axios.get(BASE_URL);
+    let didCancel = false;
+    // cancel token
+    const source = axios.CancelToken.source();
 
-        // console.log(response.data);
-        setData(response.data);
-        setIsLoading(false);
+    const fetchData = async () => {
+      setIsLoading(true);
+
+      try {
+        let response;
+        if (keyword !== "") {
+          // menggunakan cancel token
+          response = await axios.post(
+            `${BASE_URL}/merk`,
+            {
+              merk: keyword,
+            },
+            { cancelToken: source.token }
+          );
+        } else {
+          // menggunakan cancel
+          response = await axios.get(BASE_URL, { cancelToken: source.token });
+        }
+
+        if (!didCancel) {
+          // Jika komponen belum unmount, update state
+          setData(response.data);
+          setIsLoading(false);
+        }
       } catch (error) {
-        console.log(error);
+        if (!didCancel) {
+          setIsLoading(false);
+          console.log(error);
+        }
       }
     };
-    const getMerk = async () => {
-      setIsLoading(true);
-      try {
-        const response = await axios.post(`${BASE_URL}/merk`, {
-          merk: keyword,
-        });
-
-        // console.log(response.data);
-        setData(response.data);
-        setIsLoading(false);
-      } catch (error) {
-        console.log(error);
-      }
+    fetchData();
+    return () => {
+      didCancel = true;
+      // Membatalkan request ketika komponen unmount atau pengguna mulai mengetik karakter baru
+      source.cancel("Component unmounted or keyword changed");
     };
-
-    if (keyword !== "" || !keyword) {
-      getMerk();
-    } else {
-      getAllCars();
-    }
   }, [keyword]);
 
   return (
@@ -131,6 +140,8 @@ const Home: React.FC = () => {
         >
           <Spinner size="xl" />
         </Box>
+      ) : data.length <= 0 ? (
+        <h1>Buat itemmu</h1>
       ) : (
         <Grid
           templateColumns={{
