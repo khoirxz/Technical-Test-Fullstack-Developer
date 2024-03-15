@@ -36,7 +36,8 @@ export const createNewData = async (req, res) => {
 
   const newData = new CarModel({
     ...data,
-    createdAt: new Date().toDateString(),
+    merk: data.merk.toLowerCase(),
+    createdAt: new Date().toISOString(),
   });
 
   try {
@@ -57,9 +58,13 @@ export const updateData = async (req, res) => {
     return res.status(404).json({ message: "not found" });
 
   try {
-    const updateData = await CarModel.findByIdAndUpdate(_id, data, {
-      new: true,
-    });
+    const updateData = await CarModel.findByIdAndUpdate(
+      _id,
+      { ...data, modifiedAt: new Date().toISOString() },
+      {
+        new: true,
+      }
+    );
 
     res.status(201).json(updateData);
   } catch (error) {
@@ -78,6 +83,21 @@ export const deleteData = async (req, res) => {
     await CarModel.findByIdAndDelete(id);
 
     res.status(201).json({ status: "deleted" });
+  } catch (error) {
+    res.status(500).json({ status: "error", message: error.message });
+  }
+};
+
+export const searchData = async (req, res) => {
+  const { merk } = req.body;
+  const formatMerk = merk.toLowerCase();
+
+  try {
+    const response = await CarModel.find({
+      merk: { $regex: new RegExp(formatMerk, "i") },
+    });
+
+    res.status(200).json(response);
   } catch (error) {
     res.status(500).json({ status: "error", message: error.message });
   }
